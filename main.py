@@ -14,7 +14,7 @@ START_DATE = '2015-12-28'
 END_DATE = '2017-12-28'
 PRED_START_DATE = '2017-10-1'
 PRED_END_DATE = '2017-12-28'
-SCENARIOS = 10
+SCENARIOS = 1000
 
 msft = Stock('MSFT')
 msft.get(START_DATE, END_DATE)
@@ -49,13 +49,6 @@ pred_date_range = pd.date_range(start=get_first_weekday_before(pd.to_datetime(PR
 
 
 for i in range(SCENARIOS):
-    print("pdr len: ", len(pred_date_range))
-    print("preds len", len(preds[i]))
     plt.plot(pred_date_range, preds[i])
 
 plt.show()
-
-print(mu)
-print(sigma)
-print(dW_scenarios['1'])
-print(W_scenarios['1'])
