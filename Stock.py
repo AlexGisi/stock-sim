@@ -1,10 +1,9 @@
 import quandl
 import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
+from quandl_auth import QUANDL_AUTH
 
 register_matplotlib_converters()
-
-QUANDL_AUTH = 'fdcJB3tASsz6tujQXJoQ'
 
 
 class Stock:
