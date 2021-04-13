@@ -19,3 +19,10 @@ def get_first_weekday_before(datetime):
 
 def is_weekday(datetime):
     return datetime.isoweekday() in range(1, 6)
+
+
+def get_index(series, pd_datetime):
+    try:
+        return series.tolist().index(pd_datetime)
+    except ValueError:
+        return get_index(series, pd_datetime - pd.Timedelta("1 Days"))
