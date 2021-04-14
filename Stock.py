@@ -2,6 +2,8 @@ import quandl
 import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
 from quandl_auth import QUANDL_AUTH
+import numpy as np
+from utils import *
 
 register_matplotlib_converters()
 
@@ -36,3 +38,37 @@ class Stock:
         plt.xlabel('Days')
         plt.ylabel(self.ticker + ' Price')
         plt.show()
+
+    def prediction(self, start_dt, end_dt):
+        """
+        Calculate a random path for the stock between start_dt, end_dt given parameters up to start_dt assuming GBM.
+        Returns an Series of prices and the corresponding Series of Datetimes
+        :param start_dt: pandas Datetime
+        :param end_dt: pandas Datetime
+        :return: Tuple, (Series, Series)
+        """
+        pred_start_index = get_index(self.dates, start_dt)
+
+        s0 = self.closes[0]
+        dt = 1
+        T = get_weekdays_between(start_dt, end_dt)
+        N = T / dt
+        t = np.arange(1, int(N) + 1)
+        mu = np.mean(self.returns[:pred_start_index])
+        sigma = np.std(self.returns[:pred_start_index])
+        dW = np.random.normal(0, 1, int(N))
+        W = dW.cumsum()
+
+        drift = (mu - 0.5 * sigma ** 2) * t
+        diffusion = sigma * W
+
+        pred = np.array(s0 * np.exp(drift + diffusion))
+        pred = np.insert(pred, 0, s0)
+
+        pred_date_range = pd.date_range(start=get_first_weekday_before(pd.to_datetime(start_dt, format="%Y-%m-%d")),
+                                        end=pd.to_datetime(end_dt, format="%Y-%m-%d"),
+                                        freq='D'
+                                        ).map(lambda x:
+                                              x if is_weekday(x) else np.nan).dropna()
+
+        return pred, pred_date_range
