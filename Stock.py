@@ -4,6 +4,7 @@ from pandas.plotting import register_matplotlib_converters
 from quandl_auth import QUANDL_AUTH
 import numpy as np
 from utils import *
+from random import choice
 
 register_matplotlib_converters()
 
@@ -49,7 +50,7 @@ class Stock:
         """
         pred_start_index = get_index(self.dates, start_dt)
 
-        s0 = self.closes[0]
+        s0 = self.closes[pred_start_index]
         dt = 1
         T = get_weekdays_between(start_dt, end_dt)
         N = T / dt
@@ -63,6 +64,34 @@ class Stock:
         diffusion = sigma * W
 
         pred = np.array(s0 * np.exp(drift + diffusion))
+        pred = np.insert(pred, 0, s0)
+
+        pred_date_range = pd.date_range(start=get_first_weekday_before(pd.to_datetime(start_dt, format="%Y-%m-%d")),
+                                        end=pd.to_datetime(end_dt, format="%Y-%m-%d"),
+                                        freq='D'
+                                        ).map(lambda x:
+                                              x if is_weekday(x) else np.nan).dropna()
+
+        return pred, pred_date_range
+
+    def prediction_rw(self, start_dt, end_dt):
+        """
+        Simplest random walk.
+        :param start_dt:
+        :param end_dt:
+        :return:
+        """
+        pred_start_index = get_index(self.dates, start_dt)
+
+        s0 = self.closes[pred_start_index]
+        dt = 1
+        T = get_weekdays_between(start_dt, end_dt)
+        N = T / dt
+
+        dS = np.array([choice([-1, 1]) for x in range(int(N))])
+        S = dS.cumsum()
+
+        pred = np.array(s0 + S)
         pred = np.insert(pred, 0, s0)
 
         pred_date_range = pd.date_range(start=get_first_weekday_before(pd.to_datetime(start_dt, format="%Y-%m-%d")),
