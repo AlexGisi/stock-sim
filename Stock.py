@@ -4,7 +4,6 @@ from pandas.plotting import register_matplotlib_converters
 from quandl_auth import QUANDL_AUTH
 import numpy as np
 from utils import *
-from random import choice
 
 register_matplotlib_converters()
 

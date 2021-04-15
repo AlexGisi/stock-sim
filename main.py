@@ -5,7 +5,6 @@
 from Stock import Stock
 import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
-import numpy as np
 from utils import *
 
 register_matplotlib_converters()
@@ -14,7 +13,7 @@ START_DATE = '2015-12-28'
 END_DATE = '2017-12-28'
 PRED_START_DATE = '2017-10-1'
 PRED_END_DATE = '2017-12-28'
-SCENARIOS = 100
+SCENARIOS = 10000
 
 pred_start_dt = get_first_weekday_before(pd.to_datetime(PRED_START_DATE, format="%Y-%m-%d"))
 pred_end_dt = get_first_weekday_before(pd.to_datetime(PRED_END_DATE, format="%Y-%m-%d"))
