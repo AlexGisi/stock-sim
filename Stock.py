@@ -14,7 +14,6 @@ class Stock:
         self.ticker = ticker
         self.data_start = None
         self.data_end = None
-        self.dates = None
         self.closes = None
         self.returns = None
 
@@ -27,77 +26,46 @@ class Stock:
                           start_date=start,
                           end_date=end,
                           ).reset_index(drop=False)[['Date', 'Close']]
-        self.dates = data['Date']
-        self.closes = data['Close']
 
-        self.returns = ((self.closes - self.closes.shift(1)) / self.closes.shift(1)).tolist()
+        self.closes = pd.Series(data['Close'].tolist(),
+                                index=pd.DatetimeIndex(data['Date'].tolist()))
+
+        self.returns = ((self.closes - self.closes.shift(1)) / self.closes.shift(1))
         self.returns[0] = 0
 
     def plot_full(self):
         plt.figure(figsize=(15, 5))
-        plt.plot(self.dates, self.closes)
-        plt.xlabel('Days')
+        plt.plot(self.closes)
+        plt.title("Daily Close of " + self.ticker + " from " + self.data_start + " to " + self.data_end)
+        plt.xlabel('Date')
         plt.ylabel(self.ticker + ' Price')
         plt.show()
 
     def prediction(self, start_dt, end_dt):
         """
         Calculate a random path for the stock between start_dt, end_dt given parameters up to start_dt assuming GBM.
-        Returns an Series of prices and the corresponding Series of Datetimes
-        :param start_dt: pandas Datetime
-        :param end_dt: pandas Datetime
-        :return: Tuple, (Series, Series)
+        Returns a predicted path.
+        :param start_dt: pandas Datetime, stock must be traded that day.
+        :param end_dt: pandas Datetime, stock must be traded that day.
+        :return: Series
         """
-        pred_start_index = get_index(self.dates, start_dt)
+        if start_dt not in self.closes.index:
+            raise ValueError('start_dt not in self.closes.index')
+        elif end_dt not in self.closes.index:
+            raise ValueError('end_dt not in self.closes.index')
 
-        s0 = self.closes[pred_start_index]
-        dt = 1
-        T = get_weekdays_between(start_dt, end_dt)
-        N = T / dt
-        t = np.arange(1, int(N) + 1)
-        mu = np.mean(self.returns[:pred_start_index])
-        sigma = np.std(self.returns[:pred_start_index])
-        dW = np.random.normal(0, 1, int(N))
+        pred_index = self.closes[start_dt:end_dt].index
+
+        s0 = self.closes[get_first_weekday_before(start_dt)]
+        mu = np.mean(self.returns[:start_dt])
+        sigma = np.std(self.returns[:start_dt])
+        dW = pd.Series(np.random.normal(0, 1, len(pred_index)), index=pred_index)
         W = dW.cumsum()
 
-        drift = (mu - 0.5 * sigma ** 2) * t
+        drift = pd.Series(mu - 0.5 * sigma**2, index=pred_index)
         diffusion = sigma * W
 
-        pred = np.array(s0 * np.exp(drift + diffusion))
-        pred = np.insert(pred, 0, s0)
+        pred = pd.Series(s0 * np.exp(drift + diffusion), index=pred_index)
+        pred = pred.shift(1, fill_value=s0)
 
-        pred_date_range = pd.date_range(start=get_first_weekday_before(pd.to_datetime(start_dt, format="%Y-%m-%d")),
-                                        end=pd.to_datetime(end_dt, format="%Y-%m-%d"),
-                                        freq='D'
-                                        ).map(lambda x:
-                                              x if is_weekday(x) else np.nan).dropna()
-
-        return pred, pred_date_range
-
-    def prediction_rw(self, start_dt, end_dt):
-        """
-        Simplest random walk.
-        :param start_dt:
-        :param end_dt:
-        :return:
-        """
-        pred_start_index = get_index(self.dates, start_dt)
-
-        s0 = self.closes[pred_start_index]
-        dt = 1
-        T = get_weekdays_between(start_dt, end_dt)
-        N = T / dt
-
-        dS = np.array([choice([-1, 1]) for x in range(int(N))])
-        S = dS.cumsum()
-
-        pred = np.array(s0 + S)
-        pred = np.insert(pred, 0, s0)
-
-        pred_date_range = pd.date_range(start=get_first_weekday_before(pd.to_datetime(start_dt, format="%Y-%m-%d")),
-                                        end=pd.to_datetime(end_dt, format="%Y-%m-%d"),
-                                        freq='D'
-                                        ).map(lambda x:
-                                              x if is_weekday(x) else np.nan).dropna()
-
-        return pred, pred_date_range
+        return pred
