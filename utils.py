@@ -9,12 +9,12 @@ def get_weekdays_between(start_dt, end_dt):
                                1 if is_weekday(x) else 0).sum()
 
 
-def get_first_weekday_before(dt):
+def get_first_weekday_before_in(dt, index):
     next_dt = dt - pd.Timedelta('1 days')
-    if is_weekday(next_dt):
+    if is_weekday(next_dt) and next_dt in index:
         return next_dt
     else:
-        return get_first_weekday_before(next_dt)
+        return get_first_weekday_before_in(next_dt, index)
 
 
 def is_weekday(dt):

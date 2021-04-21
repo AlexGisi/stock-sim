@@ -55,7 +55,8 @@ class Stock:
 
         pred_index = self.closes[start_dt:end_dt].index
 
-        s0 = self.closes[get_first_weekday_before(start_dt)]
+        s0_date = get_first_weekday_before_in(start_dt, self.closes.index)
+        s0 = self.closes[s0_date]
         mu = np.mean(self.returns[:start_dt])
         sigma = np.std(self.returns[:start_dt])
         dW = pd.Series(np.random.normal(0, 1, len(pred_index)), index=pred_index)
@@ -65,6 +66,6 @@ class Stock:
         diffusion = sigma * W
 
         pred = pd.Series(s0 * np.exp(drift + diffusion), index=pred_index)
-        pred = pred.shift(1, fill_value=s0)
+        pred = pd.Series(s0, index=[s0_date]).append(pred)
 
         return pred
