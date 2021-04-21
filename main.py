@@ -13,7 +13,7 @@ START_DATE = '2015-12-28'
 END_DATE = '2017-12-28'
 PRED_START_DATE = '2017-10-1'
 PRED_END_DATE = '2017-12-28'
-SCENARIOS = 10000
+SCENARIOS = 1000
 
 pred_start_dt = get_first_weekday_before(pd.to_datetime(PRED_START_DATE, format="%Y-%m-%d"))
 pred_end_dt = get_first_weekday_before(pd.to_datetime(PRED_END_DATE, format="%Y-%m-%d"))
@@ -22,30 +22,29 @@ msft = Stock('MSFT')
 msft.get(START_DATE, END_DATE)
 
 
-def get_pred_difference(stock, pred, pred_dates):
-    pred_start_index = get_index(stock.dates, pred_dates[0])
-    diffs = []
-
-    print(len(stock.closes[pred_start_index:]))
-    print(len(pred))
-
-    print(stock.closes[pred_start_index:])
-    print(pred)
-
-    print(stock.dates[pred_start_index:].tolist())
-    print(pred_dates)
-    for i in range(1, len(pred)-2):
-        diffs.append(stock.closes[i+pred_start_index] - pred[i])
-
-    return diffs
+def get_pred_differences(stock, pred):
+    d = pd.Series(index=pred.index)
+    for day in pred.index:
+        print(day, stock.closes[day], pred[day])
+        d[day] = stock.closes[day] - pred[day]
+    return d
 
 
-def diff_sum():
-    differences = pd.DataFrame()
+def diff_get_mean():
+    plt.figure(figsize=(20, 10))
+
+    scen_diffs = pd.DataFrame()
     for i in range(SCENARIOS):
         pred = msft.prediction(pred_start_dt, pred_end_dt)
-        # diffs = get_pred_difference(msft, pred, pred_dates)
-        # differences = differences.append(pd.Series(data=diffs, name=i))
+        scen_diff = get_pred_differences(msft, pred)
+        plt.plot(scen_diff)
+        scen_diffs = scen_diffs.append(pd.Series(scen_diff, name=i))
+
+    sum = scen_diffs.sum(axis=0)
+    mean = sum / scen_diffs.count(axis=0)
+    plt.show()
+
+    return mean
 
 
 def plot(scens):
@@ -55,5 +54,4 @@ def plot(scens):
     plt.show()
 
 
-plot(SCENARIOS)
-
+print(diff_get_mean())
