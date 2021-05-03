@@ -14,7 +14,7 @@ START_DATE = '2015-12-28'
 END_DATE = '2017-12-28'
 PRED_START_DATE = '2017-10-1'
 PRED_END_DATE = '2017-12-28'
-SCENARIOS = 100
+SCENARIOS = 10
 
 msft = Stock('MSFT')
 msft.get(START_DATE, END_DATE)
@@ -51,10 +51,13 @@ def diff_get_mean():
 
 def plot(scens):
     plt.figure(figsize=(20, 10))
+    means = pd.Series
     for i in range(scens):
         pred = msft.prediction(pred_start_dt, pred_end_dt)
         plt.plot(pred)
     plt.show()
 
 
-diff_get_mean().to_csv(path_or_buf='res/diff.csv', header=False)
+# diff_get_mean().to_csv(path_or_buf='res/diff.csv', header=False)
+
+plot(SCENARIOS)

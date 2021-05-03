@@ -53,19 +53,34 @@ class Stock:
         elif end_dt not in self.closes.index:
             raise ValueError('end_dt not in self.closes.index')
 
-        pred_index = self.closes[start_dt:end_dt].index
+        pred_index = self.get_pred_index(start_dt, end_dt)
 
         s0_date = get_first_weekday_before_in(start_dt, self.closes.index)
         s0 = self.closes[s0_date]
+        t = np.arange(1, int(len(pred_index)) + 1)
         mu = np.mean(self.returns[:start_dt])
         sigma = np.std(self.returns[:start_dt])
         dW = pd.Series(np.random.normal(0, 1, len(pred_index)), index=pred_index)
         W = dW.cumsum()
 
-        drift = pd.Series(mu - 0.5 * sigma**2, index=pred_index)
+        drift = pd.Series((mu - 0.5 * sigma**2)*t, index=pred_index)
         diffusion = sigma * W
 
         pred = pd.Series(s0 * np.exp(drift + diffusion), index=pred_index)
         pred = pd.Series(s0, index=[s0_date]).append(pred)
 
         return pred
+
+    def get_mean(self, start_dt, end_dt):
+        index = self.get_pred_index(start_dt, end_dt)
+
+        s0_date = get_first_weekday_before_in(start_dt, self.closes.index)
+        s0 = self.closes[s0_date]
+        mu = np.mean(self.returns[:start_dt])
+        sigma = np.std(self.returns[:start_dt])
+        drift = pd.Series(mu - 0.5 * sigma ** 2, index=index)
+
+        return pd.Series(s0 * np.exp())
+
+    def get_pred_index(self, start_dt, end_dt):
+        return self.closes[start_dt:end_dt].index
