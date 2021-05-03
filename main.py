@@ -2,6 +2,7 @@
 # Reference:
 # https://towardsdatascience.com/simulating-stock-prices-in-python-using-geometric-brownian-motion-8dfd6e8c6b18
 # TODO: test 95% confidence. Does 95% of paths contain the true path 95% of the time?
+# TODO: convergence of sim to exp.
 
 from Stock import Stock
 import matplotlib.pyplot as plt
@@ -16,7 +17,7 @@ PRED_START_DATE = '2017-10-1'
 PRED_END_DATE = '2017-12-28'
 SCENARIOS = 10
 
-msft = Stock('MSFT')
+msft = Stock('AAPL')
 msft.get(START_DATE, END_DATE)
 
 pred_start_dt = get_first_weekday_before_in(pd.to_datetime(PRED_START_DATE, format="%Y-%m-%d"),
@@ -50,11 +51,25 @@ def diff_get_mean():
 
 
 def plot(scens):
-    plt.figure(figsize=(20, 10))
-    means = pd.Series
+    fig = plt.figure(figsize=(20, 10))
+    ax = fig.add_subplot(111)
+
+    means, drifts = msft.get_pred_mean(pred_start_dt, pred_end_dt)
+    ax.plot(means, color="black", linestyle="dashed")
+    final_mean = 0
+
     for i in range(scens):
         pred = msft.prediction(pred_start_dt, pred_end_dt)
-        plt.plot(pred)
+        final_mean += pred[-1]
+        ax.plot(pred)
+    final_mean = final_mean / SCENARIOS
+
+    plt.title(f"Predictions and expected mean (dashed) of MSFT stock from Oct. 1 to Dec. 28, 2017\n"
+              f"Mean return: {drifts[1]:.6f}, terminal expected value: {means[-1]:.2f}, terminal average: "
+              f"{final_mean:.2f}")
+    plt.xlabel("Date")
+    plt.ylabel("MSFT price")
+
     plt.show()
 
 

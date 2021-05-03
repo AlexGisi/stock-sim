@@ -57,13 +57,12 @@ class Stock:
 
         s0_date = get_first_weekday_before_in(start_dt, self.closes.index)
         s0 = self.closes[s0_date]
-        t = np.arange(1, int(len(pred_index)) + 1)
-        mu = np.mean(self.returns[:start_dt])
+
         sigma = np.std(self.returns[:start_dt])
         dW = pd.Series(np.random.normal(0, 1, len(pred_index)), index=pred_index)
         W = dW.cumsum()
 
-        drift = pd.Series((mu - 0.5 * sigma**2)*t, index=pred_index)
+        drift = self.get_drift(start_dt, end_dt)
         diffusion = sigma * W
 
         pred = pd.Series(s0 * np.exp(drift + diffusion), index=pred_index)
@@ -71,16 +70,32 @@ class Stock:
 
         return pred
 
-    def get_mean(self, start_dt, end_dt):
-        index = self.get_pred_index(start_dt, end_dt)
+    def get_drift(self, start_dt, end_dt):
+        if start_dt not in self.closes.index:
+            raise ValueError('start_dt not in self.closes.index')
+        elif end_dt not in self.closes.index:
+            raise ValueError('end_dt not in self.closes.index')
 
-        s0_date = get_first_weekday_before_in(start_dt, self.closes.index)
-        s0 = self.closes[s0_date]
+        pred_index = self.get_pred_index(start_dt, end_dt)
+
+        t = np.arange(1, int(len(pred_index)) + 1)
         mu = np.mean(self.returns[:start_dt])
         sigma = np.std(self.returns[:start_dt])
-        drift = pd.Series(mu - 0.5 * sigma ** 2, index=index)
+        drift = pd.Series((mu - 0.5 * sigma ** 2) * t, index=pred_index)
 
-        return pd.Series(s0 * np.exp())
+        return drift
+
+    def get_pred_mean(self, start_dt, end_dt):
+        pred_index = self.get_pred_index(start_dt, end_dt)
+        s0_date = get_first_weekday_before_in(start_dt, self.closes.index)
+        s0 = self.closes[s0_date]
+
+        drift = self.get_drift(start_dt, end_dt)
+
+        pred_means = pd.Series(s0*np.exp(drift), index=pred_index)
+        pred_means = pd.Series(s0, index=[s0_date]).append(pred_means)
+
+        return pred_means, drift
 
     def get_pred_index(self, start_dt, end_dt):
         return self.closes[start_dt:end_dt].index
